@@ -1,0 +1,37 @@
+name: Deploy Static Site to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy Static Files via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no root@sustainabilityittech.in << 'EOF'
+            # Set up paths
+            PROJECT_DIR=/root/projects/Dummy
+            WEB_ROOT=/var/www/calc.sustainabilityittech.in
+
+            # Pull latest from repo
+            cd $PROJECT_DIR
+            git pull origin main
+
+            # Copy files to web root
+            cp -r $PROJECT_DIR/* $WEB_ROOT/
+
+            # Restart nginx (if needed)
+            sudo systemctl reload nginx
+          EOF
